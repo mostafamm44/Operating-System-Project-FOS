@@ -87,6 +87,7 @@ bool is_initialized = 0;
 //==================================
 // [1] INITIALIZE DYNAMIC ALLOCATOR:
 //==================================
+uint32 *dend;
 void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpace)
 {
 
@@ -110,7 +111,7 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 	 //  print_blocks_list(freeBlocksList) ;//	(uint32)LIST_FIRST(&freeBlocksList)=daStart;
 	 //print_block_list(freeBlocksList);
 		uint32* dbeg=(uint32*)daStart ;
-		uint32* dend=(uint32*)(daStart+initSizeOfAllocatedSpace-sizeof(int));
+		 dend=(uint32*)(daStart+initSizeOfAllocatedSpace-sizeof(int));
 		*dbeg=1;
 		*dend=1;
 		uint32* Header = (uint32*) (daStart + sizeof(int));
@@ -250,17 +251,48 @@ void *alloc_block_FF(uint32 size)
 
 
 
-
-   void* kill = (struct BlockElement*)sbrk(compsize);
-           if (kill == (void*)-1) {
+    uint32 num=ROUNDUP(size,4*1024)/(4*1024);
+   void* brk = (struct BlockElement*)sbrk(num);
+           if (brk == (void*)-1) {
 
                return NULL;  // sbrk failed
                }
 
-           struct BlockElement* new_free_block = (struct BlockElement*)kill;
-           set_block_data(new_free_block, compsize, 1);
+          // cprintf("here %d----%d\n",num,size);
 
-           return (void*)(new_free_block) ;
+           struct BlockElement* new_free_block = (struct BlockElement*)(brk);
+           set_block_data(new_free_block, (num*4*1024), 0);
+
+           LIST_INSERT_TAIL(&freeBlocksList,new_free_block);
+           struct BlockElement*prev;
+           //long diff_next = (char*)(va_block->prev_next_info.le_next) - (char*)((char*)va_block+size);
+           prev=new_free_block->prev_next_info.le_prev;
+          // print_blocks_list(freeBlocksList);
+         if(prev!=NULL&&is_free_block(prev)==1){
+          // print_blocks_list(freeBlocksList);
+        	uint32 size_prev= get_block_size(prev);
+        	char* prev_end = (char*)prev + size_prev;
+           long diff = ((char*)(new_free_block)-prev_end);
+          // cprintf("prev--%x - prev+size ---%x ---diff%d/n",diff);
+         if(diff<4*sizeof(int)&&diff>=0){
+        	 	 //	 cprintf("merginggggggg\n");
+        	uint32 size_new=get_block_size(new_free_block);
+        	size_prev+=(num*4*1024);
+        	   set_block_data(prev,size_prev,0);
+        	   LIST_REMOVE(&freeBlocksList,new_free_block);
+        	   //set_block_data(new_free_block,0,1);
+        	   	   //print_blocks_list(freeBlocksList);
+           }}
+
+         struct BlockElement*oldend=(struct BlockElement*)((char*)(sbrk(0)-sizeof(int)));
+           	   uint32*new_end=sbrk(0)-sizeof(int);
+           	     *new_end =0x1;
+
+
+
+
+
+           return alloc_block_FF(size);
 
 
 }

@@ -6,8 +6,12 @@
 #endif
 
 #include <inc/types.h>
+#define mega (1024*1024)
+//#define kilo 1024
 
-
+unsigned int kstart;
+unsigned int   kbrk ;
+unsigned int khardlimit ;
 /*2017*/
 uint32 _KHeapPlacementStrategy;
 //Values for user heap placement strategy
