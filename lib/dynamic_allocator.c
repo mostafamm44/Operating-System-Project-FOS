@@ -398,16 +398,20 @@ void free_block(void *va)
 	//cprintf("here before each\n");
 	LIST_FOREACH(block,&freeBlocksList){
 		if (va_block<block){
+			//cprintf("here1\n");
 			set_block_data(va_block,size,0);
 			LIST_INSERT_BEFORE(&freeBlocksList,block,va_block);
+			//cprintf("here2\n");
 			long diff_next = (char*)(va_block->prev_next_info.le_next) - (char*)((char*)va_block+size);
-			long diff_prev = (char*)((char*)va_block->prev_next_info.le_prev+get_block_size(va_block->prev_next_info.le_prev)) - (char*)(va_block);
-			//cprintf("here\n");
+			long diff_prev;
+			if(va_block->prev_next_info.le_prev!=NULL){
+			 diff_prev = (char*)((char*)va_block->prev_next_info.le_prev+get_block_size(va_block->prev_next_info.le_prev)) - (char*)(va_block);
+			}
 			if (diff_next<(4*sizeof(int))&&(diff_prev<(4*sizeof(int)))){
 				//both merge
 				struct BlockElement *mos;
 
-
+			//	cprintf("both");
 
 				newsize=get_block_size(va_block->prev_next_info.le_next);
 				newsize+=get_block_size(va_block->prev_next_info.le_prev);
@@ -424,6 +428,7 @@ void free_block(void *va)
 
 			}
 			else if (diff_next<(4*sizeof(int))){
+				//cprintf("both");
 				//just next merge
 				newsize=get_block_size(va_block->prev_next_info.le_next);
 				newsize+=size;
@@ -431,11 +436,13 @@ void free_block(void *va)
 				//LIST_INSERT_BEFORE(&freeBlocksList,va_block->prev_next_info.le_next,va_block);
 				LIST_REMOVE(&freeBlocksList,block);
 				//cprintf("just next/n");
+				//cprintf("secondf\n");
 				return;
 
 			}
 			else if(diff_prev<(4*sizeof(int))){
 				//just prev
+				//cprintf("both");
 				prev=va_block->prev_next_info.le_prev;
 
 				newsize=get_block_size(va_block->prev_next_info.le_prev);
@@ -449,17 +456,19 @@ void free_block(void *va)
 				LIST_REMOVE(&freeBlocksList,va_block);
 				//cprintf("size AFTER REmove %d",LIST_SIZE(&freeBlocksList));
 				//cprintf("justprev\n");
+				//cprintf("both");
 
 				return;
 			}
 			else {
+				//cprintf("last\n");
 
 				return;
 
 			}
 		}
 	}
-
+	//cprintf("else\n");
 	set_block_data(va_block,size,0);
 	//cprintf("size before insert\n %d",LIST_SIZE(&freeBlocksList));
 	LIST_INSERT_TAIL(&freeBlocksList,va_block);

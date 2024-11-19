@@ -230,14 +230,8 @@ void kfree(void* virtual_address)
 
 	//you need to get the size of the given allocation using its address
 	//refer to the project presentation and documentation for details
-	cprintf("vm--%x---kstart--%x--hard--%x\n",virtual_address,kbrk);
-if((uint32)virtual_address>=(uint32)kstart&&(uint32)virtual_address<(uint32)kbrk){
-	cprintf("hereee before block\n");
-	free_block(virtual_address);
-	cprintf("hereee block freeeeeee doneeee\n");
-
-}
-else if((uint32)virtual_address<KERNEL_HEAP_MAX&&(uint32)virtual_address>=(khardlimit+(4*1024))){
+	//cprintf("vm--%x---kstart--%x--hard--%x\n",virtual_address,kbrk,khardlimit);
+if((uint32)virtual_address<KERNEL_HEAP_MAX&&(uint32)virtual_address>=(khardlimit+(4*1024))){
 	uint32* page_table;
 	uint32 xx=pf_calculate_free_frames();
 	//cprintf("freee%d\n",xx);
@@ -251,6 +245,12 @@ else if((uint32)virtual_address<KERNEL_HEAP_MAX&&(uint32)virtual_address>=(khard
 	}
 
 }
+else if((uint32)virtual_address>=(uint32)kstart&&(uint32)virtual_address<(uint32)kbrk){
+	//cprintf("hereee before block\n");
+	free_block(virtual_address);
+	//cprintf("hereee block freeeeeee doneeee\n");
+}
+
 else panic("painccc");
 }
 
