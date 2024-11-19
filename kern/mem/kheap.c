@@ -267,9 +267,10 @@ unsigned int kheap_physical_address(unsigned int virtual_address)
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 	uint32 *page_table;
 	get_page_table(ptr_page_directory,virtual_address,&page_table);
+if(page_table[PTX(virtual_address)]&0x1)
 
-
-	return page_table[PTX(virtual_address)]+( virtual_address & 0xFFF);
+	return (page_table[PTX(virtual_address)]& 0xFFFFF000)+( virtual_address & 0x00000FFF);
+else return 0;
 }
 
 unsigned int kheap_virtual_address(unsigned int physical_address)
