@@ -37,6 +37,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
             if (allocResult != E_NO_MEM) {
 
                 int mapResult = map_frame(ptr_page_directory, ptr_frame_info, i, PERM_WRITEABLE | PERM_PRESENT);
+                ptr_frame_info->vm=i;
                 if (mapResult == E_NO_MEM) {
                     panic("failed to map frame to virtual address");
                 }
@@ -112,6 +113,7 @@ void* sbrk(int numOfPages) {
                int allocResult = allocate_frame(&ptr_frame_info);
                if (allocResult != E_NO_MEM) {
                    int mapResult = map_frame(ptr_page_directory, ptr_frame_info, brk_tmp, PERM_WRITEABLE |PERM_PRESENT);
+                   ptr_frame_info->vm=brk_tmp;
                    brk_tmp+=PAGE_SIZE;
                    if (mapResult == E_NO_MEM) {
 
@@ -149,13 +151,15 @@ void* kmalloc(unsigned int size)
 //_into_prompt("kmalloc() is not implemented yet...!!");
 
 	//use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
+struct FrameInfo *ptr_frameinfo;
 uint32 pageadd=0;
   if (size<=2048){
 
 
 
+
+	return(void*)alloc_block_FF(size);
 	 // cprintf("here block \n");
-	return(void*) alloc_block_FF(size);
  }
   else{
 
@@ -164,7 +168,6 @@ uint32 pageadd=0;
 	 // cprintf("iam here mothere%d ",num_wanted_pages);
 	  uint32 *ptr_pagetable = NULL;
 int count=0;
-struct FrameInfo *ptr_frameinfo;
 uint32*page_table;
 //cprintf("here y3m %x\n",khardlimit+(4*1024));
 	  for (uint32 i = khardlimit+(4*1024); i <= KERNEL_HEAP_MAX-(4*1024); i += PAGE_SIZE) {
@@ -204,6 +207,7 @@ uint32 pagetemp=pageadd;
               		//uint32 presbit=page_table[PTX(pagetemp)]&1;
               	  	  	  //cprintf("iam here\n%d",presbit);
               ptr_frameinfo->size=num_wanted_pages;
+              	  ptr_frameinfo->vm=pagetemp;
               	  pagetemp+=PAGE_SIZE;
               if (mapResult == E_NO_MEM) {
                  panic("failed to map frame to virtual address");
@@ -277,12 +281,18 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 {
 	//TODO: [PROJECT'24.MS2 - #06] [1] KERNEL HEAP - kheap_virtual_address
 	// Write your code here, remove the panic and write your code
-	panic("kheap_virtual_address() is not implemented yet...!!");
+	//panic("kheap_virtual_address() is not implemented yet...!!");
 
 	//return the virtual address corresponding to given physical_address
 	//refer to the project presentation and documentation for details
 
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
+
+	struct FrameInfo *ptr_frame;
+	ptr_frame=to_frame_info(physical_address);
+	if (ptr_frame->references>0)
+	return ptr_frame->vm+(physical_address&0x00000fff);
+	else return 0;
 }
 //=================================================================================//
 //============================== BONUS FUNCTION ===================================//
